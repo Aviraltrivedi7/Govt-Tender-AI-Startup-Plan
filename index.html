@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TenderPilot - AI-Powered Government Tender Platform for Indian MSMEs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .pulse-animation { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .status-pill { padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+        .status-active { background: #dcfce7; color: #166534; }
+        .status-closed { background: #fee2e2; color: #991b1b; }
+        .status-upcoming { background: #fef3c7; color: #92400e; }
+        .win-prob-bar { height: 8px; border-radius: 4px; background: #e5e7eb; overflow: hidden; }
+        .win-prob-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Mock Data
+        const stats = [
+            { value: "2.4L+", label: "Active Tenders" },
+            { value: "28", label: "States Covered" },
+            { value: "3.2×", label: "Win Rate Increase" },
+            { value: "94%", label: "AI Accuracy" }
+        ];
+
+        const features = [
+            { icon: "fa-search", title: "Unified Search", desc: "Search across 30+ portals instantly" },
+            { icon: "fa-check-circle", title: "AI Eligibility", desc: "94% accurate eligibility checking" },
+            { icon: "fa-pen-fancy", title: "AI Bid Writer", desc: "Generate compliant bids in minutes" },
+            { icon: "fa-chart-line", title: "Win Prediction", desc: "Know your chances before bidding" },
+            { icon: "fa-calculator", title: "Cost Estimator", desc: "Live market rate benchmarks" },
+            { icon: "fa-bell", title: "Smart Alerts", desc: "Never miss a deadline again" }
+        ];
+
+        const tenders = [
+            { id: 1, title: "Supply of Office Equipment", org: "Ministry of Home Affairs", value: "₹2.5 Cr", deadline: "2025-08-15", status: "active", winProb: 78 },
+            { id: 2, title: "Construction of Community Center", org: "Delhi Development Authority", value: "₹8.2 Cr", deadline: "2025-08-20", status: "active", winProb: 65 },
+            { id: 3, title: "IT Services for Smart City", org: "Pune Municipal Corp", value: "₹5.7 Cr", deadline: "2025-08-25", status: "upcoming", winProb: 82 },
+            { id: 4, title: "Medical Equipment Supply", org: "AIIMS Delhi", value: "₹12.3 Cr", deadline: "2025-08-10", status: "closed", winProb: 0 },
+            { id: 5, title: "Road Maintenance Contract", org: "NHAI", value: "₹15.8 Cr", deadline: "2025-09-01", status: "active", winProb: 71 }
+        ];
+
+        const pricingPlans = [
+            { name: "Starter", price: "₹999", period: "/month", features: ["50 Tender Alerts", "20 AI Summaries", "Eligibility Checker", "Email Support"], popular: false },
+            { name: "Growth", price: "₹2,999", period: "/month", features: ["Unlimited Alerts", "AI Bid Writer (10/mo)", "Win Predictor", "Priority Support", "Mobile App Access"], popular: true },
+            { name: "Enterprise", price: "Custom", period: "", features: ["Multi-user Access", "White-label Option", "API Access", "Dedicated CSM", "Custom Integrations"], popular: false }
+        ];
+
+        // Components
+        function Navigation({ onViewChange, currentView }) {
+            return (
+                <nav className="bg-white shadow-sm sticky top-0 z-50">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex justify-between items-center h-16">
+                            <div className="flex items-center space-x-2">
+                                <i className="fas fa-paper-plane text-blue-600 text-2xl"></i>
+                                <span className="text-xl font-bold text-gray-900">TenderPilot</span>
+                            </div>
+                            <div className="hidden md:flex items-center space-x-8">
+                                <a href="#features" className="text-gray-600 hover:text-blue-600 transition">Features</a>
+                                <a href="#dashboard" className="text-gray-600 hover:text-blue-600 transition">Dashboard</a>
+                                <a href="#pricing" className="text-gray-600 hover:text-blue-600 transition">Pricing</a>
+                                <button onClick={() => onViewChange('dashboard')} className="text-gray-600 hover:text-blue-600 transition">Login</button>
+                                <button onClick={() => onViewChange('dashboard')} className="gradient-bg text-white px-6 py-2 rounded-lg font-semibold hover:opacity-90 transition">Start Free Trial</button>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+            );
+        }
+
+        function HeroSection() {
+            return (
+                <section className="gradient-bg text-white py-20">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                        <h1 className="text-5xl md:text-6xl font-bold mb-6">
+                            Win Government Tenders with AI
+                        </h1>
+                        <p className="text-xl md:text-2xl mb-12 opacity-90">
+                            India's first AI-native platform helping MSMEs discover, evaluate, and win ₹50L+ Cr in government contracts
+                        </p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+                            {stats.map((stat, idx) => (
+                                <div key={idx} className="text-center">
+                                    <div className="text-4xl font-bold mb-2">{stat.value}</div>
+                                    <div className="text-sm opacity-80">{stat.label}</div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex flex-col sm:flex-row justify-center gap-4">
+                            <button onClick={() => onViewChange('dashboard')} className="bg-white text-blue-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition">
+                                Explore Dashboard
+                            </button>
+                            <button className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-white hover:text-blue-600 transition">
+                                Watch Demo
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        function FeaturesSection() {
+            return (
+                <section id="features" className="py-20 bg-white">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-16">
+                            <h2 className="text-4xl font-bold text-gray-900 mb-4">7 AI Tools, 1 Platform</h2>
+                            <p className="text-xl text-gray-600">Everything you need to win government tenders</p>
+                        </div>
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {features.map((feature, idx) => (
+                                <div key={idx} className="card-hover p-8 border border-gray-200 rounded-xl bg-white">
+                                    <div className="w-14 h-14 gradient-bg rounded-lg flex items-center justify-center mb-6">
+                                        <i className={`fas ${feature.icon} text-white text-2xl`}></i>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
+                                    <p className="text-gray-600">{feature.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        function DashboardPreview() {
+            return (
+                <section id="dashboard" className="py-20 bg-gray-50">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-16">
+                            <h2 className="text-4xl font-bold text-gray-900 mb-4">Live Dashboard Preview</h2>
+                            <p className="text-xl text-gray-600">See what winning looks like</p>
+                        </div>
+                        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
+                            <div className="flex">
+                                {/* Sidebar */}
+                                <div className="w-64 bg-gray-900 text-white p-6 hidden lg:block">
+                                    <div className="flex items-center space-x-2 mb-8">
+                                        <i className="fas fa-paper-plane text-blue-400 text-xl"></i>
+                                        <span className="font-bold text-lg">TenderPilot</span>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="flex items-center space-x-3 text-blue-400">
+                                            <i className="fas fa-home"></i>
+                                            <span>Dashboard</span>
+                                        </div>
+                                        <div className="flex items-center space-x-3 text-gray-400">
+                                            <i className="fas fa-search"></i>
+                                            <span>Tender Search</span>
+                                        </div>
+                                        <div className="flex items-center space-x-3 text-gray-400">
+                                            <i className="fas fa-file-alt"></i>
+                                            <span>My Bids</span>
+                                        </div>
+                                        <div className="flex items-center space-x-3 text-gray-400">
+                                            <i className="fas fa-chart-bar"></i>
+                                            <span>Analytics</span>
+                                        </div>
+                                        <div className="flex items-center space-x-3 text-gray-400">
+                                            <i className="fas fa-cog"></i>
+                                            <span>Settings</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* Main Content */}
+                                <div className="flex-1 p-8">
+                                    {/* Metrics */}
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                                        <div className="bg-blue-50 p-6 rounded-xl">
+                                            <div className="text-sm text-gray-600 mb-2">Active Tenders</div>
+                                            <div className="text-3xl font-bold text-blue-600">24</div>
+                                        </div>
+                                        <div className="bg-green-50 p-6 rounded-xl">
+                                            <div className="text-sm text-gray-600 mb-2">Won This Month</div>
+                                            <div className="text-3xl font-bold text-green-600">₹18.5 Cr</div>
+                                        </div>
+                                        <div className="bg-purple-50 p-6 rounded-xl">
+                                            <div className="text-sm text-gray-600 mb-2">Win Rate</div>
+                                            <div className="text-3xl font-bold text-purple-600">34%</div>
+                                        </div>
+                                        <div className="bg-orange-50 p-6 rounded-xl">
+                                            <div className="text-sm text-gray-600 mb-2">Pending Bids</div>
+                                            <div className="text-3xl font-bold text-orange-600">7</div>
+                                        </div>
+                                    </div>
+                                    {/* AI Suggestion Bar */}
+                                    <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-6 rounded-xl mb-8">
+                                        <div className="flex items-start space-x-4">
+                                            <i className="fas fa-lightbulb text-2xl mt-1"></i>
+                                            <div>
+                                                <h3 className="font-bold mb-2">AI Recommendation</h3>
+                                                <p className="text-sm opacity-90">Based on your profile, you have an 82% chance of winning the "IT Services for Smart City" tender from Pune Municipal Corp. Recommended to bid before Aug 20.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* Tender List */}
+                                    <div>
+                                        <h3 className="text-xl font-bold text-gray-900 mb-4">Recommended Tenders</h3>
+                                        <div className="space-y-4">
+                                            {tenders.map(tender => (
+                                                <div key={tender.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition">
+                                                    <div className="flex justify-between items-start mb-4">
+                                                        <div>
+                                                            <h4 className="font-bold text-gray-900 mb-2">{tender.title}</h4>
+                                                            <div className="text-sm text-gray-600">{tender.org} • {tender.value}</div>
+                                                        </div>
+                                                        <span className={`status-pill status-${tender.status}`}>
+                                                            {tender.status.charAt(0).toUpperCase() + tender.status.slice(1)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <div className="text-sm text-gray-600">
+                                                            Deadline: <span className="font-semibold">{new Date(tender.deadline).toLocaleDateString('en-IN')}</span>
+                                                        </div>
+                                                        {tender.status !== 'closed' && (
+                                                            <div className="flex items-center space-x-4">
+                                                                <div className="w-32">
+                                                                    <div className="text-xs text-gray-600 mb-1">Win Probability</div>
+                                                                    <div className="win-prob-bar">
+                                                                        <div className="win-prob-fill bg-green-500" style={{ width: `${tender.winProb}%` }}></div>
+                                                                    </div>
+                                                                    <div className="text-xs text-right mt-1 font-semibold">{tender.winProb}%</div>
+                                                                </div>
+                                                                <button className="gradient-bg text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition">
+                                                                    View Details
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        function PricingSection() {
+            return (
+                <section id="pricing" className="py-20 bg-white">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-16">
+                            <h2 className="text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h2>
+                            <p className="text-xl text-gray-600">Choose the plan that fits your business</p>
+                        </div>
+                        <div className="grid md:grid-cols-3 gap-8">
+                            {pricingPlans.map((plan, idx) => (
+                                <div key={idx} className={`relative p-8 rounded-2xl border-2 ${plan.popular ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'} card-hover`}>
+                                    {plan.popular && (
+                                        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                                            <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold">Most Popular</span>
+                                        </div>
+                                    )}
+                                    <div className="text-center mb-8">
+                                        <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                                        <div className="text-4xl font-bold text-gray-900">{plan.price}<span className="text-lg text-gray-600">{plan.period}</span></div>
+                                    </div>
+                                    <ul className="space-y-4 mb-8">
+                                        {plan.features.map((feature, fIdx) => (
+                                            <li key={fIdx} className="flex items-center space-x-3">
+                                                <i className="fas fa-check text-green-500"></i>
+                                                <span className="text-gray-700">{feature}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <button onClick={() => onViewChange('dashboard')} className={`w-full py-3 rounded-lg font-bold transition ${plan.popular ? 'gradient-bg text-white hover:opacity-90' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'}`}>
+                                        Get Started
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        function Footer() {
+            return (
+                <footer className="bg-gray-900 text-white py-12">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="grid md:grid-cols-4 gap-8">
+                            <div>
+                                <div className="flex items-center space-x-2 mb-4">
+                                    <i className="fas fa-paper-plane text-blue-400 text-xl"></i>
+                                    <span className="font-bold text-lg">TenderPilot</span>
+                                </div>
+                                <p className="text-gray-400 text-sm">Empowering Indian MSMEs to win government contracts with AI-powered intelligence.</p>
+                            </div>
+                            <div>
+                                <h4 className="font-bold mb-4">Product</h4>
+                                <ul className="space-y-2 text-gray-400 text-sm">
+                                    <li><a href="#" className="hover:text-white transition">Features</a></li>
+                                    <li><a href="#" className="hover:text-white transition">Pricing</a></li>
+                                    <li><a href="#" className="hover:text-white transition">API</a></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 className="font-bold mb-4">Company</h4>
+                                <ul className="space-y-2 text-gray-400 text-sm">
+                                    <li><a href="#" className="hover:text-white transition">About</a></li>
+                                    <li><a href="#" className="hover:text-white transition">Blog</a></li>
+                                    <li><a href="#" className="hover:text-white transition">Careers</a></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 className="font-bold mb-4">Contact</h4>
+                                <ul className="space-y-2 text-gray-400 text-sm">
+                                    <li>contact@tenderpilot.in</li>
+                                    <li>+91 98765 43210</li>
+                                    <li>New Delhi, India</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
+                            <p>© 2025 TenderPilot. Made with ❤️ in India. Confidential — Not for Distribution.</p>
+                        </div>
+                    </div>
+                </footer>
+            );
+        }
+
+        function FullDashboard() {
+            const [activeTab, setActiveTab] = useState('overview');
+            
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    <div className="flex">
+                        {/* Sidebar */}
+                        <div className="w-64 bg-gray-900 text-white fixed h-full">
+                            <div className="p-6">
+                                <div className="flex items-center space-x-2 mb-8">
+                                    <i className="fas fa-paper-plane text-blue-400 text-xl"></i>
+                                    <span className="font-bold text-lg">TenderPilot</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {[
+                                        { id: 'overview', icon: 'fa-home', label: 'Dashboard' },
+                                        { id: 'search', icon: 'fa-search', label: 'Tender Search' },
+                                        { id: 'bids', icon: 'fa-file-alt', label: 'My Bids' },
+                                        { id: 'analytics', icon: 'fa-chart-bar', label: 'Analytics' },
+                                        { id: 'settings', icon: 'fa-cog', label: 'Settings' }
+                                    ].map(item => (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => setActiveTab(item.id)}
+                                            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition ${activeTab === item.id ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800'}`}
+                                        >
+                                            <i className={`fas ${item.icon}`}></i>
+                                            <span>{item.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="absolute bottom-0 w-full p-6 border-t border-gray-800">
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                                        <span className="font-bold">MS</span>
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold">MS Enterprises</div>
+                                        <div className="text-xs text-gray-400">Growth Plan</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Main Content */}
+                        <div className="ml-64 flex-1 p-8">
+                            {/* Header */}
+                            <div className="flex justify-between items-center mb-8">
+                                <div>
+                                    <h1 className="text-3xl font-bold text-gray-900">Welcome back!</h1>
+                                    <p className="text-gray-600">Here's your tender overview for today</p>
+                                </div>
+                                <button onClick={() => onViewChange('landing')} className="text-gray-600 hover:text-blue-600 transition">
+                                    <i className="fas fa-sign-out-alt mr-2"></i>Logout
+                                </button>
+                            </div>
+
+                            {/* Metrics */}
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="text-sm text-gray-600">Active Tenders</div>
+                                        <i className="fas fa-folder-open text-blue-600"></i>
+                                    </div>
+                                    <div className="text-3xl font-bold text-gray-900">24</div>
+                                    <div className="text-sm text-green-600 mt-2">↑ 12% from last month</div>
+                                </div>
+                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="text-sm text-gray-600">Won This Month</div>
+                                        <i className="fas fa-trophy text-green-600"></i>
+                                    </div>
+                                    <div className="text-3xl font-bold text-gray-900">₹18.5 Cr</div>
+                                    <div className="text-sm text-green-600 mt-2">↑ 28% from last month</div>
+                                </div>
+                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="text-sm text-gray-600">Win Rate</div>
+                                        <i className="fas fa-chart-line text-purple-600"></i>
+                                    </div>
+                                    <div className="text-3xl font-bold text-gray-900">34%</div>
+                                    <div className="text-sm text-green-600 mt-2">↑ 5% from last month</div>
+                                </div>
+                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="text-sm text-gray-600">Pending Bids</div>
+                                        <i className="fas fa-clock text-orange-600"></i>
+                                    </div>
+                                    <div className="text-3xl font-bold text-gray-900">7</div>
+                                    <div className="text-sm text-gray-500 mt-2">2 due this week</div>
+                                </div>
+                            </div>
+
+                            {/* AI Suggestion */}
+                            <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-6 rounded-xl mb-8">
+                                <div className="flex items-start space-x-4">
+                                    <i className="fas fa-lightbulb text-2xl mt-1"></i>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold mb-2">AI Recommendation</h3>
+                                        <p className="text-sm opacity-90 mb-4">Based on your profile, you have an 82% chance of winning the "IT Services for Smart City" tender from Pune Municipal Corp. Your past performance in similar projects and current certifications make you a strong candidate.</p>
+                                        <div className="flex space-x-4">
+                                            <button className="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-100 transition">
+                                                Start Bid
+                                            </button>
+                                            <button className="border border-white text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white hover:text-blue-600 transition">
+                                                View Analysis
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Tender List */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-bold text-gray-900">Recommended Tenders</h3>
+                                    <button className="text-blue-600 hover:text-blue-700 text-sm font-semibold">View All</button>
+                                </div>
+                                <div className="space-y-4">
+                                    {tenders.map(tender => (
+                                        <div key={tender.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div>
+                                                    <h4 className="font-bold text-gray-900 mb-2">{tender.title}</h4>
+                                                    <div className="text-sm text-gray-600">{tender.org} • {tender.value}</div>
+                                                </div>
+                                                <span className={`status-pill status-${tender.status}`}>
+                                                    {tender.status.charAt(0).toUpperCase() + tender.status.slice(1)}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <div className="text-sm text-gray-600">
+                                                    Deadline: <span className="font-semibold">{new Date(tender.deadline).toLocaleDateString('en-IN')}</span>
+                                                </div>
+                                                {tender.status !== 'closed' && (
+                                                    <div className="flex items-center space-x-4">
+                                                        <div className="w-32">
+                                                            <div className="text-xs text-gray-600 mb-1">Win Probability</div>
+                                                            <div className="win-prob-bar">
+                                                                <div className="win-prob-fill bg-green-500" style={{ width: `${tender.winProb}%` }}></div>
+                                                            </div>
+                                                            <div className="text-xs text-right mt-1 font-semibold">{tender.winProb}%</div>
+                                                        </div>
+                                                        <button className="gradient-bg text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition">
+                                                            Analyze
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function LandingPage() {
+            return (
+                <div>
+                    <Navigation onViewChange={onViewChange} currentView="landing" />
+                    <HeroSection />
+                    <FeaturesSection />
+                    <DashboardPreview />
+                    <PricingSection />
+                    <Footer />
+                </div>
+            );
+        }
+
+        // Main App
+        function App() {
+            const [currentView, setCurrentView] = useState('landing');
+
+            global.onViewChange = (view) => {
+                setCurrentView(view);
+                window.scrollTo(0, 0);
+            };
+
+            if (currentView === 'dashboard') {
+                return <FullDashboard />;
+            }
+
+            return <LandingPage />;
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
